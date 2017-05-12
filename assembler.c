@@ -363,6 +363,7 @@ short int SearchForLabel(char *label, FILE *f)
 	char trash[100]; //guarda o resto da linha
 	int found = 0; //sinaliza se a label for encontrada ou nao
 	int lines = 0; //o numero da linha no codigo onde a label for encontrada
+
 	while(!found)
 	{
 		fscanf(f, "%s", current);
