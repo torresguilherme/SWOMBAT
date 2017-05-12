@@ -1,0 +1,25 @@
+        loadc A0 -1
+        loadi A3 _neg_one   ; load -1 -> A3
+    loadi A0 IO ; read n -> A0
+    loadi A1 IO ; read m -> A1 jmpn A1 _fix_sign    ; if m < 0 jump to fix_sign
+    jump _clearA2   ; jump to clear
+_fix_sign: move A2 A1   ; fix_sign: m -> A2
+    subtract A1 A1  ; A1 = A1 - A1 = 0
+    subtract A1 A2  ; A1 = A1 - A2 = -m (= abs(m))
+    storei A3 _sign ; store -1 into _sign
+_clearA2: subtract A2 A2    ; clear A2
+_Start: jmpz A1 _D_one      ; Start: jump to D_one if m = 0.
+        add A2 A0   ; add n to the sum in A2
+    loadi A7 _one
+    subtract A1 A7
+        jump  _Start    ; go back to Start
+_D_one:  loadi A0 _sign     ; D_one: load the _sign into A0
+    jmpn A0 _neg    ; if _sign < 0 jump to neg
+        jump _pos   ; jump to pos
+_neg:   subtract A1 A2  ; neg: A1 = A1-A2 = -sum
+    move A2 A1  ; copy A1 into A2
+_pos:   storei A2 IO    ; pos: output the final sum in A2
+        exit        ; stop
+_neg_one:   .data 2 -1  ; _neg_one: constant -1
+_sign:  .data 2 1   ; _sign: (1 or -1)
+_one:   .data 2 1   ; constant 1
