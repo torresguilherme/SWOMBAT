@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <unistd.h>
 
-short int TextToBinary(char* instruction, FILE *f);
+short int TextToBinary(char* instruction, FILE *f, char *dot_data, short int *dot_pointer);
 short int GetOpcode(char* inst);
 short int SearchForLabel(char *label, FILE *f);
 
@@ -13,6 +13,14 @@ int main(int argc, char** argv)
 	// declara os componentes fisicos da maquina
 	char memoria_principal[256];
 	char stack[127];
+
+	//ESPAÇO PARA FAZER AS ALOCAÇOES NO .DATA
+	//AS CHAMADAS QUE INCLUEM UMA LABEL DE .DATA DEVEM ENDEREÇAR UMA VARIAVEL DAQUI
+	//DE ACORDO COM O NUMERO DE BITS ESPECIFICADO NO ENDEREÇO DE MEMORIA DO .DATA
+	//(8 primeiros bits dizem o tamanho do dado, 8 últimos dizem o endereço dele)
+	char dot_data[128];
+	//aponta para onde serão escritos os dados com o .data
+	short int dot_pointer = 0;
 
 	//registradores de proposito geral
 	short int reg[8];
@@ -49,7 +57,7 @@ int main(int argc, char** argv)
 
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{
-		instrucao = TextToBinary(aux, entrada);
+		instrucao = TextToBinary(aux, entrada, dot_data, &dot_pointer);
 		fwrite(&instrucao, 1, sizeof(short int), memoria_de_instrucao);
 		fseek(entrada, 1, SEEK_CUR);
 	}
@@ -65,7 +73,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-short int TextToBinary(char* instruction, FILE* f)
+short int TextToBinary(char* instruction, FILE* f, char *dot_data, short int *dot_pointer)
 {
 	// essa funcao converte o assembly pra linguagem de maquina
 	// IMPLEMENTAR O .DATA
@@ -293,11 +301,83 @@ short int TextToBinary(char* instruction, FILE* f)
 
 	else if(opcode == -1) // .data
 	{
+		int bits = 0;
+		int bitCounter;
+		int constante = 0;
+		int endereco = *dot_pointer;
+
+		//pega o número de bits que serão alocados
+		while(!isdigit(*p))
+		{
+			p++;
+		}
+
+		while(isdigit(*p))
+		{
+			bits *= 10;
+			bits += ((*p)-48);
+			p++;
+		}
+
+		//procura uma constante
+		while(!isdigit(*p) && (*p) != '-')
+		{
+			p++;
+		}
+
+		//trata a constante caso ela seja um número positivo
+		if(isdigit(*p))
+		{
+			while(isdigit(*p))
+			{
+				constante *= 10;
+				constante += ((*p)-48);
+				p++;
+			}
+
+			for(bitCounter = 0; bitCounter < bits; bitCounter++)
+			{
+				dot_data[*dot_pointer] = (constante >> (8 * bitCounter));
+				(*dot_pointer)++;
+			}
+		}
+
+		//trata o número negativo caso contrário
+		else
+		{
+			p++;
+			while(isdigit(*p))
+			{
+				constante *= 10;
+				constante += ((*p)-48);
+				p++;
+			}
+
+			constante--;
+
+			for(bitCounter = 0; bitCounter < bits; bitCounter++)
+			{
+				dot_data[*dot_pointer] = (constante >> (8 * bitCounter));
+				if(bitCounter == bits-1)
+				{
+					dot_data[*dot_pointer] += (1 << 7);
+				}
+
+				(*dot_pointer)++;
+			}
+		}
+
+		if((*dot_pointer) % 2 == 1)
+		{
+			(*dot_pointer)++;
+		}
+
+		ret = (bits << 8) | endereco;
+		return ret;
 	}
 
 	// faz uma operação de "or" nos bits do opcode e informaçoes no aux
 	// para gerar o valor de retorno
-	printf("%i %i\n", opcodeBits, aux);
 	ret = opcodeBits | aux;
 
 	//volta à posição original no arquivo
@@ -420,9 +500,8 @@ short int GetOpcode(char* inst)
 short int SearchForLabel(char *label, FILE *f)
 {
 	//busca linearmente por uma label no arquivo de entrada comecando do inicio
-	//salva a antiga posicao no arquivo pra poder voltar depois
+	//gera o endereco na memoria de instruçoes e guarda na chamada da operação
 
-	//vai ate o inicio
 	fseek(f, 0, SEEK_SET);
 
 	char current[30]; //primeira palavra na linha
