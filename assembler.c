@@ -139,16 +139,11 @@ short int TextToBinary(char* instruction, FILE* f)
 		p++;
 	}
 
-	//operacoes reg-mem ou com constante
-	else if(opcode == 1 //loadi
-	|| opcode == 2 //storei
-	|| opcode == 8 //jmpz
-	|| opcode == 9 //jmpn
-	|| opcode == 13 //loadc
+	//operacoes nos registradores com constante
+	else if(opcode == 13 //loadc
 	|| opcode == 18) //addi
 	{
 		// pega o endereco do reg
-
 		while(!isdigit(*p))
 		{
 			p++;
@@ -157,13 +152,12 @@ short int TextToBinary(char* instruction, FILE* f)
 		aux += ((*p)-48) << 8;
 		p++;
 
-		//pode receber tanto labels quanto endereços de memória
-		while(!isdigit(*p) && (*p) != '_' && (*p) != '-')
+		//procura a constante
+		while(!isdigit(*p) && (*p) != '-')
 		{
 			p++;
 		}
 
-		//nesse caso, ele poe o numero do endereco ou a constante
 		//numero positivo
 		if(isdigit(*p))
 		{
@@ -186,10 +180,49 @@ short int TextToBinary(char* instruction, FILE* f)
 				aux += ((*p)-48);
 				p++;
 			}
-			aux += 1 << 7;
+			aux += (1 << 7);
 			aux--;
 		}
+	}
 
+	//operacoes reg-mem com endereçamento direto
+	else if(opcode == 1 //loadi
+	|| opcode == 2 //storei
+	|| opcode == 8 //jmpz
+	|| opcode == 9) //jmpn
+	{
+		// pega o endereco do reg
+		while(!isdigit(*p))
+		{
+			p++;
+		}
+
+		aux += ((*p)-48) << 8;
+		p++;
+
+		//pode receber tanto labels quanto endereços de memória
+		while(!isdigit(*p) && (*p) != '_' && (*p) != 'I')
+		{
+			p++;
+		}
+
+		//endereço direto
+		if(isdigit(*p))
+		{
+			while(isdigit(*p))
+			{
+				aux *= 10;
+				aux += ((*p)-48);
+				p++;
+			}
+
+		}
+
+		//posição da memória para I/O (posição número 254)
+		else if((*p) == 'I')
+		{
+			aux += 254;
+		}
 
 		//aqui, ele busca a label
 		else
@@ -264,6 +297,7 @@ short int TextToBinary(char* instruction, FILE* f)
 
 	// faz uma operação de "or" nos bits do opcode e informaçoes no aux
 	// para gerar o valor de retorno
+	printf("%i %i\n", opcodeBits, aux);
 	ret = opcodeBits | aux;
 
 	//volta à posição original no arquivo
