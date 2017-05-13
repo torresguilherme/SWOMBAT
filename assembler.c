@@ -73,7 +73,6 @@ short int TextToBinary(char* instruction, FILE* f)
 {
 	// essa funcao converte o assembly pra linguagem de maquina
 	// IMPLEMENTAR O .DATA
-	printf("jaeh cuzao\n");
 	
 	short int ret = 0;
 	char operation[20];
@@ -108,7 +107,6 @@ short int TextToBinary(char* instruction, FILE* f)
 	//soma o opcode na memoria de instruçao
 	short int opcode = GetOpcode(operation);
 	short int opcodeBits = opcode << 11;
-	printf("%i\n", opcode);
 
 	//variaveis auxiliares para guardar enderecos e labels, respectivamente
 	short int aux = 0;
