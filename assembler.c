@@ -49,9 +49,7 @@ int main(int argc, char** argv)
 
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{
-		printf("%s\n", aux);
 		instrucao = TextToBinary(aux, entrada);
-		printf("%hi\n", instrucao);
 		fwrite(&instrucao, 1, sizeof(short int), memoria_de_instrucao);
 		fseek(entrada, 1, SEEK_CUR);
 	}
@@ -75,6 +73,9 @@ short int TextToBinary(char* instruction, FILE* f)
 	short int ret = 0;
 	char operation[20];
 	char *p = &instruction[0];
+
+	//salva a posicao no arquivo por precaucao
+	int position_save = ftell(f);
 
 	if(*p == '_') //verifica se é uma label
 	{
@@ -244,7 +245,7 @@ short int TextToBinary(char* instruction, FILE* f)
 		//label
 		else
 		{
-			while(isalpha(*p) || isdigit(*p))
+			while((*p) == '_' || isalpha(*p) || isdigit(*p))
 			{
 				label[i] = (*p);
 				i++;
@@ -265,6 +266,8 @@ short int TextToBinary(char* instruction, FILE* f)
 	// para gerar o valor de retorno
 	ret = opcodeBits | aux;
 
+	//volta à posição original no arquivo
+	fseek(f, position_save, SEEK_SET);
 	return ret;
 }
 
@@ -382,10 +385,8 @@ short int GetOpcode(char* inst)
 
 short int SearchForLabel(char *label, FILE *f)
 {
-	printf("label a ser buscada: %s\n", label);
 	//busca linearmente por uma label no arquivo de entrada comecando do inicio
 	//salva a antiga posicao no arquivo pra poder voltar depois
-	int position_save = ftell(f);
 
 	//vai ate o inicio
 	fseek(f, 0, SEEK_SET);
@@ -409,9 +410,6 @@ short int SearchForLabel(char *label, FILE *f)
 			lines++;
 		}
 	}
-
-	//volta para a antiga posicao
-	fseek(f, 0, position_save);
 
 	//assumindo que o endereçamento das instruçoes ocorre so em numeros pares
 	//o que eu acho que está certo pela especificação
