@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <unistd.h>
 
 short int TextToBinary(char* instruction, FILE *f);
 short int GetOpcode(char* inst);
@@ -42,13 +43,19 @@ int main(int argc, char** argv)
 	short int status = 0;
 
 	FILE *entrada = fopen(argv[1], "r");
-	FILE *memoria_de_instrucao = fopen("mem.txt", "w");
+	FILE *memoria_de_instrucao = fopen("mem.txt", "wb");
 	char aux[100];
 
-	while(!feof(entrada))
+	short int instrucao;
+
+	while(fscanf(entrada, "%[^\n]s", aux))
 	{
-		fscanf(entrada, "%[^\n]s", aux);
-		fprintf(memoria_de_instrucao, "%d\n", TextToBinary(aux, entrada));
+		printf("%i\n", ftell(entrada));
+		printf("%s -> %i\n", aux, strlen(aux));
+		sleep(1);
+		instrucao = TextToBinary(aux, entrada);
+		printf("%hi\n", instrucao);
+		fwrite(&instrucao, 1, sizeof(short int), memoria_de_instrucao);
 	}
 	fclose(entrada);
 
@@ -66,6 +73,8 @@ short int TextToBinary(char* instruction, FILE* f)
 {
 	// essa funcao converte o assembly pra linguagem de maquina
 	// IMPLEMENTAR O .DATA
+	printf("jaeh cuzao\n");
+	
 	short int ret = 0;
 	char operation[20];
 	char *p = &instruction[0];
@@ -98,12 +107,14 @@ short int TextToBinary(char* instruction, FILE* f)
 
 	//soma o opcode na memoria de instruçao
 	short int opcode = GetOpcode(operation);
-	ret += opcode * pow(2, 11);
+	short int opcodeBits = opcode << 11;
+	printf("%i\n", opcode);
 
 	//variaveis auxiliares para guardar enderecos e labels, respectivamente
 	short int aux = 0;
 	char label[30];
 
+//	printf("chega ate aqui\n");
 	//operacoes reg-reg
 	if(opcode == 3 //add
 	|| opcode == 4 //subtract
@@ -120,14 +131,16 @@ short int TextToBinary(char* instruction, FILE* f)
 			p++;
 		}
 
-		ret += ((*p)-48) * pow(2, 8); 
+		aux += ((*p)-48) << 8;
+		p++;	
 
 		while(!isdigit(*p))
 		{
 			p++;
 		}
 
-		ret += ((*p)-48) * pow(2, 5);
+		aux += ((*p)-48) << 5;
+		p++;
 	}
 
 	//operacoes reg-mem ou com constante
@@ -138,29 +151,57 @@ short int TextToBinary(char* instruction, FILE* f)
 	|| opcode == 13 //loadc
 	|| opcode == 18) //addi
 	{
+//		printf("entra nesse loop\n");
 		// pega o endereco do reg
+//		printf("%c\n", *p);
+
 		while(!isdigit(*p))
 		{
 			p++;
 		}
 
-		ret += ((*p)-48) * pow(2, 8);
+//		printf("passou da primeira parte\n");
+
+		aux += ((*p)-48) << 8;
+		p++;
 
 		//pode receber tanto labels quanto endereços de memória
-		while(!isdigit(*p) && (*p) != '_')
+		while(!isdigit(*p) && (*p) != '_' && (*p) != '-')
 		{
 			p++;
 		}
 
-		//nesse caso, ele poe o numero do endereco
+//		printf("passou da segunda parte\n");
+
+		//nesse caso, ele poe o numero do endereco ou a constante
+		//numero positivo
 		if(isdigit(*p))
 		{
 			while(isdigit(*p))
 			{
 				aux *= 10;
 				aux += ((*p)-48);
+				p++;
 			}
+
+//			printf("passou da terceira parte\n");
+
 		}
+
+		//numero negativo -> faz o complemento de dois
+		else if((*p) == '-')
+		{
+			p++;
+			while(isdigit(*p))
+			{
+				aux *= 10;
+				aux += ((*p)-48);
+				p++;
+			}
+			aux += pow(2, 7);
+			aux--;
+		}
+
 
 		//aqui, ele busca a label
 		else
@@ -172,12 +213,12 @@ short int TextToBinary(char* instruction, FILE* f)
 				p++;
 			}
 
+//			printf("passou da terceira parte\n");
+
 			label[i] = ':';
 			label[i+1] = 0;
 			aux = SearchForLabel(label, f);
 		}
-
-		ret += aux;
 	}
 
 	//operacoes de pilha
@@ -190,7 +231,8 @@ short int TextToBinary(char* instruction, FILE* f)
 			p++;
 		}
 
-		ret += ((*p)-48) * pow(2, 8);
+		aux += ((*p)-48) << 8;
+		p++;
 	}
 
 	//jumps incondicionais
@@ -210,6 +252,7 @@ short int TextToBinary(char* instruction, FILE* f)
 			{
 				aux *= 10;
 				aux += ((*p)-48);
+				p++;
 			}
 		}
 
@@ -227,13 +270,15 @@ short int TextToBinary(char* instruction, FILE* f)
 			label[i+1] = 0;
 			aux = SearchForLabel(label, f);
 		}
-
-		ret += aux;
 	}
 
 	else if(opcode == -1) // .data
 	{
 	}
+
+	// faz uma operação de "or" nos bits do opcode e informaçoes no aux
+	// para gerar o valor de retorno
+	ret = opcodeBits | aux;
 
 	return ret;
 }
@@ -352,6 +397,7 @@ short int GetOpcode(char* inst)
 
 short int SearchForLabel(char *label, FILE *f)
 {
+	printf("busca pela label!\n");
 	//busca linearmente por uma label no arquivo de entrada comecando do inicio
 	//salva a antiga posicao no arquivo pra poder voltar depois
 	int position_save = ftell(f);
