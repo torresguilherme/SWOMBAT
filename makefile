@@ -1,6 +1,5 @@
 CC = gcc
 CFLAGS = -g3 -Wall
-LINKS = -lm
 SOURCE = assembler.c
 EX = assembler
 

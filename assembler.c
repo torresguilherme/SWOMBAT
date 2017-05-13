@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <math.h>
 #include <unistd.h>
 
 short int TextToBinary(char* instruction, FILE *f);
@@ -42,20 +41,19 @@ int main(int argc, char** argv)
 	//halt bit: cancela a execucao do programa
 	short int status = 0;
 
-	FILE *entrada = fopen(argv[1], "r");
-	FILE *memoria_de_instrucao = fopen("mem.txt", "wb");
+	FILE *entrada = fopen(argv[1], "r+");
+	FILE *memoria_de_instrucao = fopen("mem.txt", "w+b");
 	char aux[100];
 
 	short int instrucao;
 
-	while(fscanf(entrada, "%[^\n]s", aux))
+	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{
-		printf("%i\n", ftell(entrada));
-		printf("%s -> %i\n", aux, strlen(aux));
-		sleep(1);
+		printf("%s\n", aux);
 		instrucao = TextToBinary(aux, entrada);
 		printf("%hi\n", instrucao);
 		fwrite(&instrucao, 1, sizeof(short int), memoria_de_instrucao);
+		fseek(entrada, 1, SEEK_CUR);
 	}
 	fclose(entrada);
 
@@ -112,7 +110,6 @@ short int TextToBinary(char* instruction, FILE* f)
 	short int aux = 0;
 	char label[30];
 
-//	printf("chega ate aqui\n");
 	//operacoes reg-reg
 	if(opcode == 3 //add
 	|| opcode == 4 //subtract
@@ -149,16 +146,12 @@ short int TextToBinary(char* instruction, FILE* f)
 	|| opcode == 13 //loadc
 	|| opcode == 18) //addi
 	{
-//		printf("entra nesse loop\n");
 		// pega o endereco do reg
-//		printf("%c\n", *p);
 
 		while(!isdigit(*p))
 		{
 			p++;
 		}
-
-//		printf("passou da primeira parte\n");
 
 		aux += ((*p)-48) << 8;
 		p++;
@@ -168,8 +161,6 @@ short int TextToBinary(char* instruction, FILE* f)
 		{
 			p++;
 		}
-
-//		printf("passou da segunda parte\n");
 
 		//nesse caso, ele poe o numero do endereco ou a constante
 		//numero positivo
@@ -181,8 +172,6 @@ short int TextToBinary(char* instruction, FILE* f)
 				aux += ((*p)-48);
 				p++;
 			}
-
-//			printf("passou da terceira parte\n");
 
 		}
 
@@ -196,7 +185,7 @@ short int TextToBinary(char* instruction, FILE* f)
 				aux += ((*p)-48);
 				p++;
 			}
-			aux += pow(2, 7);
+			aux += 1 << 7;
 			aux--;
 		}
 
@@ -204,14 +193,12 @@ short int TextToBinary(char* instruction, FILE* f)
 		//aqui, ele busca a label
 		else
 		{
-			while(isalpha(*p) || isdigit(*p))
+			while((*p) == '_' || isalpha(*p) || isdigit(*p))
 			{
 				label[i] = (*p);
 				i++;
 				p++;
 			}
-
-//			printf("passou da terceira parte\n");
 
 			label[i] = ':';
 			label[i+1] = 0;
@@ -395,7 +382,7 @@ short int GetOpcode(char* inst)
 
 short int SearchForLabel(char *label, FILE *f)
 {
-	printf("busca pela label!\n");
+	printf("label a ser buscada: %s\n", label);
 	//busca linearmente por uma label no arquivo de entrada comecando do inicio
 	//salva a antiga posicao no arquivo pra poder voltar depois
 	int position_save = ftell(f);
