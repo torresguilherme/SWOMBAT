@@ -7,6 +7,7 @@
           addi A0 -3
                                   ;Linha de comentário não deve ser lida
           jmpn A0 TrechoA         ;vai pular, pois A0=-3<0
+          jump ERRO               ;se chegar até aqui está errado
      
 
 _TrechoB: add A0 A3
