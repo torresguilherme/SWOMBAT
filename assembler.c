@@ -2,82 +2,35 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
 
-short int TextToBinary(char* instruction, FILE *f, char *dot_data, short int *dot_pointer);
+short int TextToBinary(char* instruction, FILE *f, short int *pointer);
 short int GetOpcode(char* inst);
 short int SearchForLabel(char *label, FILE *f);
 
 int main(int argc, char** argv)
 {
-	// declara os componentes fisicos da maquina
-	char memoria_principal[256];
-	char stack[127];
-
-	//ESPAÇO PARA FAZER AS ALOCAÇOES NO .DATA
-	//AS CHAMADAS QUE INCLUEM UMA LABEL DE .DATA DEVEM ENDEREÇAR UMA VARIAVEL DAQUI
-	//DE ACORDO COM O NUMERO DE BITS ESPECIFICADO NO ENDEREÇO DE MEMORIA DO .DATA
-	//(8 primeiros bits dizem o tamanho do dado, 8 últimos dizem o endereço dele)
-	char dot_data[128];
-	//aponta para onde serão escritos os dados com o .data
-	short int dot_pointer = 0;
-
-	//registradores de proposito geral
-	short int reg[8];
-
-	//aponta para a posicao superior da pilha
-	short int stack_pointer = 0;
-
-	//guarda o valor a ser empilhado
-	short int sdr;
-
-	//program counter
-	short int pc = 0;
-
-	//operandos das operacoes logico-aritmeticas
-	short int buffer1, buffer2;
-
-	//instruction register
-	short int ir;
-
-	//valor a ser escrito no load
-	short int mar;
-
-	//valor a ser escrito no store
-	short int mdr;
-
-	//halt bit: cancela a execucao do programa
-	short int status = 0;
-
 	FILE *entrada = fopen(argv[1], "r+");
 	FILE *memoria_de_instrucao = fopen("mem.txt", "w+b");
 	char aux[100];
 
+	short int pointer = 252;
 	short int instrucao;
 
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{
-		instrucao = TextToBinary(aux, entrada, dot_data, &dot_pointer);
-		fwrite(&instrucao, 1, sizeof(short int), memoria_de_instrucao);
+		instrucao = TextToBinary(aux, entrada, &pointer);
+		fwrite(&instrucao, sizeof(short int), 1, memoria_de_instrucao);
 		fseek(entrada, 1, SEEK_CUR);
 	}
+
 	fclose(entrada);
-
-	//loop de execuçao da máquina
-//	while(!status)
-//	{
-		//colocar aqui a execução das instruções da memória
-//	}
-
 	fclose(memoria_de_instrucao);
 	return 0;
 }
 
-short int TextToBinary(char* instruction, FILE* f, char *dot_data, short int *dot_pointer)
+short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 {
 	// essa funcao converte o assembly pra linguagem de maquina
-	// IMPLEMENTAR O .DATA
-	
 	short int ret = 0;
 	char operation[20];
 	char *p = &instruction[0];
@@ -188,8 +141,8 @@ short int TextToBinary(char* instruction, FILE* f, char *dot_data, short int *do
 				aux += ((*p)-48);
 				p++;
 			}
-			aux += (1 << 7);
 			aux--;
+			aux = (~aux);
 		}
 	}
 
@@ -297,83 +250,6 @@ short int TextToBinary(char* instruction, FILE* f, char *dot_data, short int *do
 			label[i+1] = 0;
 			aux = SearchForLabel(label, f);
 		}
-	}
-
-	else if(opcode == -1) // .data
-	{
-		int bits = 0;
-		int bitCounter;
-		int constante = 0;
-		int endereco = *dot_pointer;
-
-		//pega o número de bits que serão alocados
-		while(!isdigit(*p))
-		{
-			p++;
-		}
-
-		while(isdigit(*p))
-		{
-			bits *= 10;
-			bits += ((*p)-48);
-			p++;
-		}
-
-		//procura uma constante
-		while(!isdigit(*p) && (*p) != '-')
-		{
-			p++;
-		}
-
-		//trata a constante caso ela seja um número positivo
-		if(isdigit(*p))
-		{
-			while(isdigit(*p))
-			{
-				constante *= 10;
-				constante += ((*p)-48);
-				p++;
-			}
-
-			for(bitCounter = 0; bitCounter < bits; bitCounter++)
-			{
-				dot_data[*dot_pointer] = (constante >> (8 * bitCounter));
-				(*dot_pointer)++;
-			}
-		}
-
-		//trata o número negativo caso contrário
-		else
-		{
-			p++;
-			while(isdigit(*p))
-			{
-				constante *= 10;
-				constante += ((*p)-48);
-				p++;
-			}
-
-			constante--;
-
-			for(bitCounter = 0; bitCounter < bits; bitCounter++)
-			{
-				dot_data[*dot_pointer] = (constante >> (8 * bitCounter));
-				if(bitCounter == bits-1)
-				{
-					dot_data[*dot_pointer] += (1 << 7);
-				}
-
-				(*dot_pointer)++;
-			}
-		}
-
-		if((*dot_pointer) % 2 == 1)
-		{
-			(*dot_pointer)++;
-		}
-
-		ret = (bits << 8) | endereco;
-		return ret;
 	}
 
 	// faz uma operação de "or" nos bits do opcode e informaçoes no aux
