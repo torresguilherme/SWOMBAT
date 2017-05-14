@@ -1,0 +1,32 @@
+         loadi A1 _Valor1
+         loadi A2 _Valor2
+         storei A1 IO      ; deve mostrar o valor 15
+         storei A2 IO      ; deve mostrar o valor 511
+
+         addi A1 -16
+         addi A2 100
+         storei A1 _Valor1
+         storei A2 _Valor2         
+
+         loadi A3 _Valor1
+         loadi A4 _Valor2
+         storei A3 IO      ; deve mostrar o valor -1
+         storei A4 IO      ; deve mostrar o valor 611
+ 
+         loadc A7 0        ;este trecho mostra os números 1 4 7 e 10
+         call _proc1
+         addi A7 2
+         call _proc1
+         addi A7 2
+         call _proc1
+         addi A7 2         
+         call _proc1
+         exit
+
+_proc1:  addi A7 1
+         storei A7 IO      ; deve mostrar o valor A7+1       
+         return
+
+_Valor1: .data 2 15         ; 0000.0000 0000.1111
+_Valor2: .data 2 511        ; 0000.0001 1111.1111
+
