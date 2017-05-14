@@ -1,0 +1,28 @@
+        loadc A0 1
+        loadc A1 2
+        loadc A2 3
+        loadc A3 1
+        clear A4
+        clear A5
+        addi A3 -5    ;valor de A3 =-4
+        addi A4 -5
+        addi A5 -6
+        loadi A6 IO   ;digita numero X
+        storei A0 IO  ;deve mostrar 1 na tela
+        clear  A0
+        storei A0 IO  ;deve mostrar 0 na tela
+        move A5 A0
+        storei A0 IO  ;deve mostrar -6 na tela
+        divide A3 A1  
+        storei A3 IO  ;deve mostrar -2 na tela
+        subtract A2 A1
+        storei A2 IO  ;deve mostrar 1 na tela
+        multiply A1 A4
+        storei A1 IO  ;deve mostrar -10 na tela
+        add A6 A2
+        storei A6 IO  ;deve mostrar X+1 na tela
+        negate A7 A2
+        storei A7 IO  ;deve mostrar -2 na tela (complemento de 2)
+        exit
+
+
