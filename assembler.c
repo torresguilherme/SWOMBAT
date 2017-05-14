@@ -10,18 +10,65 @@ short int SearchForLabel(char *label, FILE *f);
 int main(int argc, char** argv)
 {
 	FILE *entrada = fopen(argv[1], "r+");
-	FILE *memoria_de_instrucao = fopen("mem.txt", "w+b");
+	FILE *memoria_de_instrucao = fopen("mem.hex", "w+");
 	char aux[100];
 
+	//o ponteiro que tem o endereco das constantes comeca na ultima posicao
+	//(excluíndo a entrada e saída)
 	short int pointer = 252;
 	short int instrucao;
+	short int complemento;
+	short int endereco = 0;
 
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{
 		instrucao = TextToBinary(aux, entrada, &pointer);
-		fwrite(&instrucao, sizeof(short int), 1, memoria_de_instrucao);
+		if(instrucao != -1)
+		{
+			//printf("%i %i %i\n", instrucao, (instrucao >> 8), instrucao & (255));
+			//start code, tamanho dos dados em hex, offset do endereco e tipo do dado
+			fprintf(memoria_de_instrucao, ":01");
+	
+			//offset do endereco
+			fprintf(memoria_de_instrucao, "%04x", endereco++);
+
+			//tipo do dado
+			fprintf(memoria_de_instrucao, "00");
+
+			//dado da instrucao - primeira parte
+			fprintf(memoria_de_instrucao, "%02x", (instrucao >> 8));
+
+			//complemento de dois da soma dos hexes
+			complemento = (instrucao >> 8);
+			complemento += endereco;
+			complemento--;
+			complemento = (~complemento);
+			fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
+	
+			//segunda linha: mesmo inicio
+			fprintf(memoria_de_instrucao, ":01");
+
+			//offset do endereco
+			fprintf(memoria_de_instrucao, "%04x", endereco++);
+
+			//tipo do dado
+			fprintf(memoria_de_instrucao, "00");
+
+
+			//dado da instrucao - segunda parte
+			fprintf(memoria_de_instrucao, "%02x", instrucao & (255));
+
+			//complemento de dois da soma dos hexes
+			complemento = (instrucao & (255));
+			complemento += endereco;
+			complemento--;
+			complemento = (~complemento);
+			fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
+		}
 		fseek(entrada, 1, SEEK_CUR);
 	}
+	//end of file
+	fprintf(memoria_de_instrucao, ":00000001ff");
 
 	fclose(entrada);
 	fclose(memoria_de_instrucao);
@@ -70,6 +117,7 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 
 	//variaveis auxiliares para guardar enderecos e labels, respectivamente
 	short int aux = 0;
+	short int constante = 0;
 	char label[30];
 
 	//operacoes reg-reg
@@ -124,10 +172,11 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 		{
 			while(isdigit(*p))
 			{
-				aux *= 10;
-				aux += ((*p)-48);
+				constante *= 10;
+				constante += ((*p)-48);
 				p++;
 			}
+			aux |= constante;
 
 		}
 
@@ -137,12 +186,14 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 			p++;
 			while(isdigit(*p))
 			{
-				aux *= 10;
-				aux += ((*p)-48);
+				constante *= 10;
+				constante += ((*p)-48);
 				p++;
 			}
-			aux--;
-			aux = (~aux);
+			constante--;
+			constante = (~constante);
+			constante ^= (255 << 8);
+			aux |= constante;
 		}
 	}
 
@@ -250,6 +301,12 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 			label[i+1] = 0;
 			aux = SearchForLabel(label, f);
 		}
+	}
+
+	else
+	{
+		fseek(f, position_save, SEEK_SET);
+		return -1;
 	}
 
 	// faz uma operação de "or" nos bits do opcode e informaçoes no aux
