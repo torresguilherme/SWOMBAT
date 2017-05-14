@@ -1,32 +1,32 @@
 ;este programa pede 5 números do usuário e coloca na pilha, então tira 3, adiciona mais 2 e por fim esvazia a pilha.
         loadc A0 5
-        jump LOOP1
+        jump _LOOP1
 
 _LOOP1: loadi A1 IO    ; Coloca 5 números na pilha
         push A1
         addi A0 -1
-        jmpz A0 LOOP2  ; se já foram 5 iterações, pula para o próximo ciclo
-        jump LOOP1
+        jmpz A0 _LOOP2  ; se já foram 5 iterações, pula para o próximo ciclo
+        jump _LOOP1
 
 _LOOP2: loadc A0 3     ; Tira 3 números na pilha
         pop A1
         storei A1 IO
         addi A0 -1
-        jmpz A0 LOOP3
-        jump LOOP2
+        jmpz A0 _LOOP3
+        jump _LOOP2
 
 _LOOP3: loadc A0 2     ; Coloca 2 números na pilha
         loadi A1 IO
         push A1
         addi A0 -1
-        jmpz A0 LOOP4
-        jump LOOP3
+        jmpz A0 _LOOP4
+        jump _LOOP3
 
 _LOOP4: loadc A0 4     ; Tira 4 números na pilha
         pop A1
         storei A1 IO
         addi A0 -1
-        jmpz A0 FIM
-        jump LOOP4
+        jmpz A0 _FIM
+        jump _LOOP4
 
 _FIM:   exit

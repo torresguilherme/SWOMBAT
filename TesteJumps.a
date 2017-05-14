@@ -6,15 +6,15 @@
           loadc A3 3
           addi A0 -3
                                   ;Linha de comentário não deve ser lida
-          jmpn A0 TrechoA         ;vai pular, pois A0=-3<0
-          jump ERRO               ;se chegar até aqui está errado
+          jmpn A0 _TrechoA         ;vai pular, pois A0=-3<0
+          jump _ERRO               ;se chegar até aqui está errado
      
 
 _TrechoB: add A0 A3
           storei A2 IO            ;deve mostrar 2 na tela
-          jmpn A0 TrechoA         ;NÃOvai pular, pois A0=3
-          jmpz A0 TrechoB         ;NÃOvai pular, pois A0=3
-          jump TrechoC              
+          jmpn A0 _TrechoA         ;NÃOvai pular, pois A0=3
+          jmpz A0 _TrechoB         ;NÃOvai pular, pois A0=3
+          jump _TrechoC              
 
 _ERRO:    clear A7
           addi A7 -47
@@ -23,9 +23,9 @@ _ERRO:    clear A7
 
 _TrechoA: storei A1 IO            ;deve mostrar 1 na tela
           clear A0
-          jmpn A0 TrechoC         ;NÃOvai pular, pois A0=0
-          jmpz A0 TrechoB         ;vai pular, pois A0=0
-          jump ERRO               ;se chegar até aqui está errado
+          jmpn A0 _TrechoC         ;NÃOvai pular, pois A0=0
+          jmpz A0 _TrechoB         ;vai pular, pois A0=0
+          jump _ERRO               ;se chegar até aqui está errado
 
 _TrechoC: 
           storei A3 IO  ;deve mostrar 3 na tela

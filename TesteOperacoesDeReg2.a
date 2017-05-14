@@ -31,7 +31,7 @@
         storei A1 IO  ;deve mostrar 30120 na tela
         add A6 A2
         storei A6 IO  ;deve mostrar X-1005 na tela
-        negate A7 A2
+        negative A7 A2
         storei A7 IO  ;deve mostrar 1004 na tela
         exit
 
