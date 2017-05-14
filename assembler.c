@@ -17,7 +17,7 @@ int main(int argc, char** argv)
 	//(excluíndo a entrada e saída)
 	short int pointer = 252;
 	short int instrucao;
-	short int complemento;
+	int complemento;
 	short int endereco = 0;
 
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 			fprintf(memoria_de_instrucao, "00");
 
 			//dado da instrucao - primeira parte
-			fprintf(memoria_de_instrucao, "%02x", (instrucao >> 8));
+			fprintf(memoria_de_instrucao, "%02x", (instrucao >> 8) & (255));
 
 			//complemento de dois da soma dos hexes
 			complemento = (instrucao >> 8);
@@ -252,9 +252,10 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 		}
 	}
 
-	//operacoes de pilha
+	//operacoes de pilha + clear
 	else if(opcode == 16 //push
-	|| opcode == 17) //pop
+	|| opcode == 17	//pop
+	|| opcode == 14) //clear
 	{
 		// pega endereco do reg
 		while(!isdigit(*p))
@@ -312,6 +313,7 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 	// faz uma operação de "or" nos bits do opcode e informaçoes no aux
 	// para gerar o valor de retorno
 	ret = opcodeBits | aux;
+	printf("%i\n", ret);
 
 	//volta à posição original no arquivo
 	fseek(f, position_save, SEEK_SET);
