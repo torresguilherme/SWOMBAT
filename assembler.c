@@ -10,8 +10,13 @@ short int SearchForLabel(char *label, FILE *f);
 int main(int argc, char** argv)
 {
 	FILE *entrada = fopen(argv[1], "r+");
-	FILE *memoria_de_instrucao = fopen("mem.hex", "w+");
-	char aux[100];
+	char nome_do_arquivo[300];
+	nome_do_arquivo[0] = 0;
+	int size = strlen(argv[1]);
+	strncat(nome_do_arquivo, argv[1], size - 2);
+	sprintf(nome_do_arquivo, "%s.hex", nome_do_arquivo);
+	FILE *memoria_de_instrucao = fopen(nome_do_arquivo, "w+");
+	char aux[300];
 
 	//o ponteiro que tem o endereco das constantes comeca na ultima posicao
 	//(excluíndo a entrada e saída)
@@ -25,7 +30,7 @@ int main(int argc, char** argv)
 		instrucao = TextToBinary(aux, entrada, &pointer);
 		if(instrucao != -1)
 		{
-			//printf("%i %i %i\n", instrucao, (instrucao >> 8), instrucao & (255));
+			printf("%i %i %i\n", instrucao, (instrucao >> 8), instrucao & (255));
 			//start code, tamanho dos dados em hex, offset do endereco e tipo do dado
 			fprintf(memoria_de_instrucao, ":01");
 	
@@ -64,6 +69,12 @@ int main(int argc, char** argv)
 			complemento--;
 			complemento = (~complemento);
 			fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
+		}
+
+		int i;
+		for(i=0; i < 300; i++)
+		{
+			aux[i] = 0;
 		}
 		fseek(entrada, 1, SEEK_CUR);
 	}
@@ -118,7 +129,7 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 	//variaveis auxiliares para guardar enderecos e labels, respectivamente
 	short int aux = 0;
 	short int constante = 0;
-	char label[30];
+	char label[100];
 
 	//operacoes reg-reg
 	if(opcode == 3 //add
@@ -304,6 +315,12 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 		}
 	}
 
+	else if(opcode == 0 //exit
+	|| opcode == 20) //return
+	{
+		aux = 0;
+	}
+
 	else
 	{
 		fseek(f, position_save, SEEK_SET);
@@ -313,7 +330,6 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 	// faz uma operação de "or" nos bits do opcode e informaçoes no aux
 	// para gerar o valor de retorno
 	ret = opcodeBits | aux;
-	printf("%i\n", ret);
 
 	//volta à posição original no arquivo
 	fseek(f, position_save, SEEK_SET);
@@ -439,10 +455,10 @@ short int SearchForLabel(char *label, FILE *f)
 
 	fseek(f, 0, SEEK_SET);
 
-	char current[30]; //primeira palavra na linha
-	char trash[100]; //guarda o resto da linha
+	char current[100]; //primeira palavra na linha
+	char trash[300]; //guarda o resto da linha
 	int found = 0; //sinaliza se a label for encontrada ou nao
-	int lines = 0; //o numero da linha no codigo onde a label for encontrada
+	short int lines = 0; //o numero da linha no codigo onde a label for encontrada
 
 	while(!found)
 	{
@@ -455,11 +471,12 @@ short int SearchForLabel(char *label, FILE *f)
 		else //nesse caso, ainda nao encontrou
 		{
 			fscanf(f, "%[^\n]s", trash);
-			lines++;
+			if(isalpha(current[0]) || current[0] == '_')
+			{
+				lines++;
+			}
 		}
 	}
 
-	//assumindo que o endereçamento das instruçoes ocorre so em numeros pares
-	//o que eu acho que está certo pela especificação
 	return lines * 2;
 }
