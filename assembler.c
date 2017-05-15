@@ -16,8 +16,8 @@ int main(int argc, char** argv)
 	strncat(nome_do_arquivo, argv[1], size - 2);
 	sprintf(nome_do_arquivo, "%s.hex", nome_do_arquivo);
 	FILE *memoria_de_instrucao = fopen(nome_do_arquivo, "w+");
-	FILE *memoria_de_dados = fopen("mem_dados.txt", "w+");
-	FILE *tabela_de_simbolos = fopen("tablea.txt", "w+");
+	FILE *memoria_de_dados = tmpfile();
+	FILE *tabela_de_simbolos = tmpfile();
 	char aux[300];
 
 	//o ponteiro que tem o endereco das constantes comeca na ultima posicao
