@@ -78,6 +78,14 @@ int main(int argc, char** argv)
 		}
 		fseek(entrada, 1, SEEK_CUR);
 	}
+
+	for(; endereco < 256; endereco++)
+	{
+		fprintf(memoria_de_instrucao, ":01%04x0000", endereco);
+		complemento = endereco;
+		complemento = (~complemento);
+		fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
+	}
 	//end of file
 	fprintf(memoria_de_instrucao, ":00000001ff");
 
