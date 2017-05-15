@@ -3,9 +3,9 @@
 #include <string.h>
 #include <ctype.h>
 
-short int TextToBinary(char* instruction, FILE *f, short int *pointer);
+short int TextToBinary(char* instruction, FILE *f, short int *pointer,FILE *tabela_de_simbolos);
 short int GetOpcode(char* inst);
-short int SearchForLabel(char *label, FILE *f);
+short int SearchForLabel(char *label,FILE *tabela_de_simbolos);
 
 int main(int argc, char** argv)
 {
@@ -16,6 +16,8 @@ int main(int argc, char** argv)
 	strncat(nome_do_arquivo, argv[1], size - 2);
 	sprintf(nome_do_arquivo, "%s.hex", nome_do_arquivo);
 	FILE *memoria_de_instrucao = fopen(nome_do_arquivo, "w+");
+	FILE *memoria_de_dados = fopen(nome_do_arquivo, "w+");
+	FILE *tabela_de_simbolos = fopen(nome_do_arquivo, "w+");
 	char aux[300];
 
 	//o ponteiro que tem o endereco das constantes comeca na ultima posicao
@@ -24,7 +26,133 @@ int main(int argc, char** argv)
 	short int instrucao;
 	int complemento;
 	short int endereco = 0;
-
+	short int numlinha = 0;
+	short int numBytes = 0;
+	short int contador = 0;
+	int data;
+	char *pnt = &aux[0];
+	char *label;
+	long long int temp =0;
+	
+	//PASSAGEM 1
+	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
+	{ 
+	  //montar tabela de simbolos e definir tamanho do codigo
+	  // Le a linha.
+	  // é codigo? não: ignora     
+	  //           numlinha++, proxima iterac
+	  // é código? sim: tem label?
+	  // tem label? nao: numlinha++, proxima iteracao 
+	  // tem label? sim: salva a string da label. é .data?
+	  // é .data? não: escreve no file ela e o endereço(numlinha) na tabela LABEL ADDR ex.: _LOOP: 23
+	  //                                                        numlinha++, proxima iteracao
+	  // é .data? sim: escreve no file ela e o endereço(numlinha) na tabela
+	  //                                                        incrementa o numlinha pro tanto de bytes que estamos alocando
+	  //                                                        escreve no arquivo memoria_de_dados a data sequencialmente    
+	  //                                                        proxima iteracao    
+	  pnt = &aux[0];
+	  label = (char *) malloc (20 * sizeof(char));
+	  
+	  if((*pnt!='\n')||(*pnt!=';')){
+	    if(*pnt == '_') //verifica se é uma label
+	    {
+	      //salva a label
+	      contador =0;
+	      while(*pnt != ':')
+	      {
+	        label[contador] = *pnt;
+	        contador++;
+	        pnt++;
+	      }
+	      label[contador] = *pnt;
+	      contador++;
+	      pnt++;
+	      
+	      fprintf(tabela_de_simbolos, "%s %d\n", label, 2*numlinha); 
+	      printf( "TABELA: %s %d\n", label, 2*numlinha); 
+	      
+	      //procura a proxima letra ou ponto (.data)
+	      while(!isalpha(*pnt) && (*pnt) != '.')
+	      {
+	        pnt++;
+	      }
+	      
+	      if (*pnt == '.') //verifica se é .data
+	      {
+	        printf("é .data!!!!\n");
+	        
+	        //procura proximo número (numBytes a ser alocado)
+	        while(!isdigit(*pnt))
+	        {
+	          pnt++;
+	        }
+	        
+	        temp =0;
+	        while(isdigit(*pnt))
+	        {
+	          temp *= 10;
+	          temp += ((*pnt)-48);
+	          pnt++;
+	        }
+	        numBytes =temp;
+	        printf("NumBytes = %d\n",numBytes);
+	        
+	        //procura proximo número (data a ser alocada)
+	        temp =0;
+	        while(!isdigit(*pnt) && (*pnt) != '-')
+	        {
+	          pnt++;
+	        }
+	        //numero positivo
+	        if(isdigit(*pnt))
+	        {
+	          while(isdigit(*pnt))
+	          {
+	            temp *= 10;
+	            temp += ((*pnt)-48);
+	            pnt++;
+	          }
+	          data = temp;
+	          printf("data = %d\n",data);
+	        }
+	        
+	        //numero negativo -> faz o complemento de dois
+	        else if((*pnt) == '-')
+	        {
+	          printf("entrei cuzao\n");
+	          pnt++;
+	          while(isdigit(*pnt))
+	          {
+	            temp *= 10;
+	            temp += ((*pnt)-48);
+	            pnt++;
+	          }
+	          temp--;
+	          temp = (~temp);
+	          data = temp;
+	          printf("data = %d\n", data);
+	        }
+	        
+	        // Colocar em HEX bonitinho e printar no memoria_de_dados
+	        
+	        numlinha++;
+	        
+	      } else {numlinha++;}
+	    } else {numlinha++;}
+	  }
+	  
+	  int ia;
+	  for(ia=0; ia < 300; ia++)
+	  {
+	    aux[ia] = 0;
+	  }
+	  fseek(entrada, 1, SEEK_CUR);
+	}
+	
+	fseek(memoria_de_dados, 1, SEEK_SET); //rebobina memoria_de_dados
+	fseek(entrada, 1, SEEK_SET);//rebobina entrada
+ 
+  //PASSAGEM2
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{
 		instrucao = TextToBinary(aux, entrada, &pointer);
@@ -81,6 +209,15 @@ int main(int argc, char** argv)
 		complemento = (~complemento);
 		fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
 	}
+	
+	//coloca a memória de dados no fim do código
+	//	fseek(memoria_de_dados, 1, SEEK_SET);
+	//	while(fscanf(memoria_de_dados, "%[\n]s", aux) != EOF)
+	//  {
+	//	  printf("%s\n", aux);
+	//    fprintf(memoria_de_instrucao, "%s\n", aux);
+
+	
 	//end of file
 	fprintf(memoria_de_instrucao, ":00000001ff");
 
@@ -89,7 +226,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-short int TextToBinary(char* instruction, FILE* f, short int *pointer)
+short int TextToBinary(char* instruction, FILE* f, short int *pointer,FILE *tabela_de_simbolos)
 {
 	// essa funcao converte o assembly pra linguagem de maquina
 	short int ret = 0;
@@ -253,19 +390,20 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 		//aqui, ele busca a label
 		else
 		{
-			while((*p) == '_' || isalpha(*p) || isdigit(*p))
-			{
-				label[i] = (*p);
-				i++;
-				p++;
-			}
-
-			label[i] = ':';
-			label[i+1] = 0;
-			aux = SearchForLabel(label, f);
+		  while((*p) == '_' || isalpha(*p) || isdigit(*p))
+		  {
+		    label[i] = (*p);
+		    i++;
+		    p++;
+		  }
+		  
+		  label[i] = ':';
+		  label[i+1] = 0;
+		  constante = SearchForLabel(label, tabela_de_simbolos);
 		}
+		
+		aux |= constante;
 	}
-
 	//operacoes de pilha + clear
 	else if(opcode == 16 //push
 	|| opcode == 17	//pop
@@ -305,16 +443,16 @@ short int TextToBinary(char* instruction, FILE* f, short int *pointer)
 		//label
 		else
 		{
-			while((*p) == '_' || isalpha(*p) || isdigit(*p))
-			{
-				label[i] = (*p);
-				i++;
-				p++;
-			}
-
-			label[i] = ':';
-			label[i+1] = 0;
-			aux = SearchForLabel(label, f);
+		  while((*p) == '_' || isalpha(*p) || isdigit(*p))
+		  {
+		    label[i] = (*p);
+		    i++;
+		    p++;
+		  }
+		  
+		  label[i] = ':';
+		  label[i+1] = 0;
+		  aux = SearchForLabel(label, tabela_de_simbolos);
 		}
 	}
 
@@ -451,35 +589,38 @@ short int GetOpcode(char* inst)
 	return -1;
 }
 
-short int SearchForLabel(char *label, FILE *f)
+short int SearchForLabel(char *label,FILE *tabela_de_simbolos)
 {
-	//busca linearmente por uma label no arquivo de entrada comecando do inicio
-	//gera o endereco na memoria de instruçoes e guarda na chamada da operação
-
-	fseek(f, 0, SEEK_SET);
-
-	char current[100]; //primeira palavra na linha
-	char trash[300]; //guarda o resto da linha
-	int found = 0; //sinaliza se a label for encontrada ou nao
-	short int lines = 0; //o numero da linha no codigo onde a label for encontrada
-
-	while(!found)
-	{
-		fscanf(f, "%s", current);
-		if(!strcmp(label, current)) //compara com a label que se quer encontrar
-		{
-			found = 1;
-		}
-
-		else //nesse caso, ainda nao encontrou
-		{
-			fscanf(f, "%[^\n]s", trash);
-			if(isalpha(current[0]) || current[0] == '_')
-			{
-				lines++;
-			}
-		}
-	}
-
-	return lines * 2;
+  //busca linearmente por uma label na matriz de símbolos comecando do inicio
+  //gera o endereco na memoria de instruçoes e guarda na chamada da operação
+  
+  fseek(tabela_de_simbolos, 0, SEEK_SET);
+  
+  char current[100]; //primeira palavra na linha
+  char trash[300]; //guarda o resto da linha
+  int labeladdr = 0; //endereço da label
+  int found = 0; //sinaliza se a label for encontrada ou nao
+  short int lines = 0; //o numero da linha no codigo onde a label for encontrada
+  
+  while(!found)
+  {
+    fscanf(tabela_de_simbolos, "%s", current);
+    if(!strcmp(label, current)) //compara com a label que se quer encontrar
+    {
+      found = 1;
+      fscanf(tabela_de_simbolos, "%d", &labeladdr);
+      
+    }
+    
+    else //nesse caso, ainda nao encontrou
+    {
+      fscanf(tabela_de_simbolos, "%[^\n]s", trash);
+      if(isalpha(current[0]) || current[0] == '_')
+      {
+        lines++;
+      }
+    }
+  }
+  
+  return labeladdr;
 }
