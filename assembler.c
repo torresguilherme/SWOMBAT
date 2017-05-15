@@ -71,11 +71,6 @@ int main(int argc, char** argv)
 			fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
 		}
 
-		int i;
-		for(i=0; i < 300; i++)
-		{
-			aux[i] = 0;
-		}
 		fseek(entrada, 1, SEEK_CUR);
 	}
 
