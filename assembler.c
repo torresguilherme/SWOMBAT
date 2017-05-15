@@ -3,7 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 
-short int TextToBinary(char* instruction, FILE *f, short int *pointer,FILE *tabela_de_simbolos);
+short int TextToBinary(char* instruction, FILE *f,FILE *tabela_de_simbolos);
 short int GetOpcode(char* inst);
 short int SearchForLabel(char *label,FILE *tabela_de_simbolos);
 
@@ -16,13 +16,12 @@ int main(int argc, char** argv)
 	strncat(nome_do_arquivo, argv[1], size - 2);
 	sprintf(nome_do_arquivo, "%s.hex", nome_do_arquivo);
 	FILE *memoria_de_instrucao = fopen(nome_do_arquivo, "w+");
-	FILE *memoria_de_dados = fopen(nome_do_arquivo, "w+");
-	FILE *tabela_de_simbolos = fopen(nome_do_arquivo, "w+");
+	FILE *memoria_de_dados = fopen("mem_dados.txt", "w+");
+	FILE *tabela_de_simbolos = fopen("tablea.txt", "w+");
 	char aux[300];
 
 	//o ponteiro que tem o endereco das constantes comeca na ultima posicao
 	//(excluíndo a entrada e saída)
-	short int pointer = 252;
 	short int instrucao;
 	int complemento;
 	short int endereco = 0;
@@ -33,6 +32,7 @@ int main(int argc, char** argv)
 	char *pnt = &aux[0];
 	char *label;
 	long long int temp =0;
+	short int hexlinha =0;
 	
 	//PASSAGEM 1
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
@@ -68,8 +68,7 @@ int main(int argc, char** argv)
 	      contador++;
 	      pnt++;
 	      
-	      fprintf(tabela_de_simbolos, "%s %d\n", label, 2*numlinha); 
-	      printf( "TABELA: %s %d\n", label, 2*numlinha); 
+	      fprintf(tabela_de_simbolos, "%s %d\n", label, numlinha); 
 	      
 	      //procura a proxima letra ou ponto (.data)
 	      while(!isalpha(*pnt) && (*pnt) != '.')
@@ -79,7 +78,6 @@ int main(int argc, char** argv)
 	      
 	      if (*pnt == '.') //verifica se é .data
 	      {
-	        printf("é .data!!!!\n");
 	        
 	        //procura proximo número (numBytes a ser alocado)
 	        while(!isdigit(*pnt))
@@ -95,7 +93,6 @@ int main(int argc, char** argv)
 	          pnt++;
 	        }
 	        numBytes =temp;
-	        printf("NumBytes = %d\n",numBytes);
 	        
 	        //procura proximo número (data a ser alocada)
 	        temp =0;
@@ -113,13 +110,11 @@ int main(int argc, char** argv)
 	            pnt++;
 	          }
 	          data = temp;
-	          printf("data = %d\n",data);
 	        }
 	        
 	        //numero negativo -> faz o complemento de dois
 	        else if((*pnt) == '-')
 	        {
-	          printf("entrei cuzao\n");
 	          pnt++;
 	          while(isdigit(*pnt))
 	          {
@@ -130,15 +125,26 @@ int main(int argc, char** argv)
 	          temp--;
 	          temp = (~temp);
 	          data = temp;
-	          printf("data = %d\n", data);
 	        }
 	        
 	        // Colocar em HEX bonitinho e printar no memoria_de_dados
+	        int iz = 0;
+	        complemento = 0;
+	        for (iz = numBytes-1; iz>=0; iz--)
+	          {
+	            fprintf(memoria_de_dados,":01%04x00", numlinha);
+	            hexlinha = (data&(255<<(iz*8)))>>(iz*8);
+	            fprintf(memoria_de_dados, "%02x", hexlinha & (255));
+	            //complemento de dois da soma dos hexes
+	            complemento = hexlinha + numlinha;
+	            complemento = (~complemento);
+	            fprintf(memoria_de_dados, "%02x\n", complemento & (255));
+	            numlinha++;
+	          }
 	        
-	        numlinha++;
 	        
-	      } else {numlinha++;}
-	    } else {numlinha++;}
+	      } else {numlinha = numlinha+2;}
+	    } else {numlinha = numlinha+2;}
 	  }
 	  
 	  int ia;
@@ -155,10 +161,9 @@ int main(int argc, char** argv)
   //PASSAGEM2
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{
-		instrucao = TextToBinary(aux, entrada,  &pointer, tabela_de_simbolos);
+		instrucao = TextToBinary(aux, entrada, tabela_de_simbolos);
 		if(instrucao != -1)
 		{
-			printf("%i %i %i\n", instrucao, (instrucao >> 8), instrucao & (255));
 			//start code, tamanho dos dados em hex, offset do endereco e tipo do dado
 			fprintf(memoria_de_instrucao, ":01");
 	
@@ -187,7 +192,6 @@ int main(int argc, char** argv)
 			//tipo do dado
 			fprintf(memoria_de_instrucao, "00");
 
-
 			//dado da instrucao - segunda parte
 			fprintf(memoria_de_instrucao, "%02x", instrucao & (255));
 
@@ -202,6 +206,15 @@ int main(int argc, char** argv)
 		fseek(entrada, 1, SEEK_CUR);
 	}
 
+	//coloca a memória de dados no fim do código
+		fseek(memoria_de_dados, 0, SEEK_SET);
+		while(fscanf(memoria_de_dados, "%[^\n]s", aux) != EOF)
+	  {
+	      fprintf(memoria_de_instrucao, "%s\n", aux);
+	      endereco++;
+	      fseek(memoria_de_dados, 1, SEEK_CUR);
+	  }	 
+	
 	for(; endereco < 256; endereco++)
 	{
 		fprintf(memoria_de_instrucao, ":01%04x0000", endereco);
@@ -210,23 +223,17 @@ int main(int argc, char** argv)
 		fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
 	}
 	
-	//coloca a memória de dados no fim do código
-	//	fseek(memoria_de_dados, 1, SEEK_SET);
-	//	while(fscanf(memoria_de_dados, "%[\n]s", aux) != EOF)
-	//  {
-	//	  printf("%s\n", aux);
-	//    fprintf(memoria_de_instrucao, "%s\n", aux);
-
-	
 	//end of file
 	fprintf(memoria_de_instrucao, ":00000001ff");
 
 	fclose(entrada);
 	fclose(memoria_de_instrucao);
+	fclose(memoria_de_dados);
+	fclose(tabela_de_simbolos);
 	return 0;
 }
 
-short int TextToBinary(char* instruction, FILE* f, short int *pointer,FILE *tabela_de_simbolos)
+short int TextToBinary(char* instruction, FILE* f, FILE *tabela_de_simbolos)
 {
 	// essa funcao converte o assembly pra linguagem de maquina
 	short int ret = 0;
