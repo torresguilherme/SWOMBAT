@@ -8,7 +8,6 @@
         addi A4 24
         addi A5 -250
         loadi A6 IO   ;digita numero X
-
         loadc A7 2
         multiply A0 A7 ; A0 =500
         loadc A7 5
@@ -17,7 +16,6 @@
         multiply A3 A7 ; A3 =-6275
         loadc A7 60
         multiply A5 A7 ; A5 =-15000
-
         storei A0 IO  ;deve mostrar 500 na tela
         clear  A0
         storei A0 IO  ;deve mostrar 0 na tela

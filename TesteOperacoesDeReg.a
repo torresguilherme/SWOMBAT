@@ -21,7 +21,7 @@
         storei A1 IO  ;deve mostrar -10 na tela
         add A6 A2
         storei A6 IO  ;deve mostrar X+1 na tela
-        negate A7 A2
+        negative A7 A2
         storei A7 IO  ;deve mostrar -2 na tela (complemento de 2)
         exit
 
