@@ -1,3 +1,0 @@
-_proc1: 50
-_Valor1: 58
-_Valor2: 60

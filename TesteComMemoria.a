@@ -10,7 +10,7 @@
          loadi A4 _Valor3
          storei A3 IO      ; deve mostrar o valor -1
          storei A4 IO      ; deve mostrar o valor 611
-         loadc A7 0        ;este trecho mostra os números 1 4 7 e 10
+         loadc A7 0        ;este trecho mostra os numeros 1 4 7 e 10
          call _proc1
          addi A7 2
          call _proc1
