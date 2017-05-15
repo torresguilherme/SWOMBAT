@@ -155,7 +155,7 @@ int main(int argc, char** argv)
   //PASSAGEM2
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{
-		instrucao = TextToBinary(aux, entrada, &pointer);
+		instrucao = TextToBinary(aux, entrada,  &pointer, tabela_de_simbolos);
 		if(instrucao != -1)
 		{
 			printf("%i %i %i\n", instrucao, (instrucao >> 8), instrucao & (255));
