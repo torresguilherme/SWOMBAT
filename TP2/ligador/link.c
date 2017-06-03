@@ -158,7 +158,7 @@ short int short int juntaobjetos(objeto.o)
 //Depois, ir append a tabela lendo linha a linha num LOOP:
  LOOP 
 //          Para o tipo NORMAL: offset = numlinhaINSTRUCOES
-//          Para o tipo .data: offset = numlinhaDATA
+//          Para o tipo .data: offset = - (numero da linha do primeiro .data neste objeto) + numlinhaDATA
 //          Para o tipo .extern: nem precisa colocar na tabela, pq ta definido em outro modulo .o
  END
 
