@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g3 -Wall
-SOURCE = assembler.c
-EX = assembler
+SOURCE = mont.c
+EX = mont
 
 all: FORCE
 	$(CC) $(CFLAGS) $(SOURCE) -o $(EX)
