@@ -25,14 +25,10 @@ short int SearchForLabel(char *label,FILE *tabela_de_simbolos);
 int main(int argc, char** argv)
 {
 	FILE *entrada = fopen(argv[1], "r+");
-	char nome_do_arquivo[300];
-	nome_do_arquivo[0] = 0;
-	int size = strlen(argv[1]);
-	strncat(nome_do_arquivo, argv[1], size - 2);
-	sprintf(nome_do_arquivo, "%s.hex", nome_do_arquivo);
+	char *nome_do_arquivo = argv[2];
 	FILE *memoria_de_instrucao = fopen(nome_do_arquivo, "w+");
 	FILE *memoria_de_dados = tmpfile();
-	FILE *tabela_de_simbolos = tmpfile();
+	FILE *tabela_de_simbolos = fopen("para_de_dar_bug.txt", "w+");
 	char aux[300];
 
 	//o ponteiro que tem o endereco das constantes comeca na ultima posicao
@@ -48,7 +44,39 @@ int main(int argc, char** argv)
 	char *label;
 	long long int temp =0;
 	short int hexlinha =0;
+	int dot_externs = 0;
 	
+	label = (char *) malloc (20 * sizeof(char));
+	//PASSAGEM ZERO
+	fscanf(entrada, "%[^\n]s", aux);
+	while(aux[0] == '.')
+	{
+		printf("nosso aux: %s\n", aux);
+		dot_externs++;
+		pnt = &aux[0];
+		
+		while(*pnt != '_')
+		{
+			pnt++;
+		}
+		
+		contador = 0;
+		while((*pnt == '_') || isalpha(*pnt) || isdigit(*pnt))
+		{
+		      	label[contador] = *pnt;
+		        contador++;
+		        pnt++;
+		}
+		label[contador] = ':';
+		contador++;
+		label[contador] = 0;
+		printf("a label eh essa aqui ta: %s\n", label);
+
+		fprintf(tabela_de_simbolos, "%s 0\n", label); 
+		fseek(entrada, 1, SEEK_CUR);
+		fscanf(entrada, "%[^\n]s", aux);
+	}
+
 	//PASSAGEM 1
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)
 	{ 
@@ -66,7 +94,6 @@ int main(int argc, char** argv)
 	  //                                                        escreve no arquivo memoria_de_dados a data sequencialmente    
 	  //                                                        proxima iteracao    
 	  pnt = &aux[0];
-	  label = (char *) malloc (20 * sizeof(char));
 	  
 	  if((*pnt!='\n')||(*pnt!=';')){
 	    if(*pnt == '_') //verifica se é uma label
@@ -81,6 +108,7 @@ int main(int argc, char** argv)
 	      }
 	      label[contador] = *pnt;
 	      contador++;
+		label[contador] = 0;
 	      pnt++;
 	      
 	      fprintf(tabela_de_simbolos, "%s %d\n", label, numlinha); 
@@ -172,6 +200,7 @@ int main(int argc, char** argv)
 	
 	fseek(memoria_de_dados, 1, SEEK_SET); //rebobina memoria_de_dados
 	fseek(entrada, 1, SEEK_SET);//rebobina entrada
+	printf("cheguei cuzaum\n");
  
   //PASSAGEM2
 	while(fscanf(entrada, "%[^\n]s", aux) != EOF)

@@ -1,0 +1,25 @@
+.extern _meupau
+.extern _suamae1
+          loadc A0 0              ; Este programa deve mostrar na tela os numeros 1 2 3 nesta ordem
+          loadc A1     1          ;muito espaco entre operandos nao deve ser problema
+          loadc A2 2
+          loadc A3 3
+          addi A0 -3
+          jmpn A0 _TrechoA         ;vai pular, pois A0=-3<0
+          jump _ERRO               ;se chegar ate aqui esta errado
+_TrechoB: add A0 A3
+          storei A2 IO             ;deve mostrar 2 na tela
+          jmpn A0 _TrechoA         ;NAOvai pular, pois A0=3
+          jmpz A0 _TrechoB         ;NAOvai pular, pois A0=3
+          jump _TrechoC              
+_ERRO:    clear A7
+          addi A7 -47
+          storei A2 IO  ;deve mostrar -47 na tela
+          exit
+_TrechoA: storei A1 IO            ;deve mostrar 1 na tela
+          clear A0
+          jmpn A0 _TrechoC         ;NAOvai pular, pois A0=0
+          jmpz A0 _TrechoB         ;vai pular, pois A0=0
+          jump _ERRO               ;se chegar ate aqui esta errado
+_TrechoC: storei A3 IO  ;deve mostrar 3 na tela
+          exit
