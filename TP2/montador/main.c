@@ -1,18 +1,14 @@
-// Apenas copiei e colei o montador do TP1 aqui, pra já ficar facil pra editar
-// Arrumar: 
-//         *Chamada e argumentos para ficar de acordo com a especificação do TP2
-//         *Implementar a EXTERN
-//         *Arrumar a saída .o ->exemplo:
-//                             ->4              //numero de linhas do HEX
-//                             ->2              //numero de linhas da tabela
-//                             ->1              //numero de linhas dos dados
-//                             ->Label1 2       //Inicio da tabela
-//                             ->Label2 .data 4
-//                             ->01010101010101 //Inicio do HEX
-//                             ->01010101010101
-//                             ->01010101010101
-//                             ->01010101010101
-//                             ->111111         //Inicio dos dados
+//FORMATO DA SAIDA DO ARQUIVO OBJETO:
+//x -> TAMANHO DA TABELA DE LABELS
+//y -> TAMANHO DAS INSTRUÇÕES EM LINHAS HEX
+//z -> TAMANHO DOS DADOS (.DATA) EM LINHAS HEX
+//
+//- TABELA HEX
+//(CADA LABEL (COM _ ATRÁS E O : NA FRENTE) ESTÁ SEGUIDA DE SEU ENDEREÇO) EM DECIMAL
+// EXTERNS SÃO SEGUIDOS PELA LETRA 'e'
+//- HEX CONTENDO INSTRUÇÕES E DADOS ALOCADOS COM .DATA
+//(TODOS OS ENDEREÇOS DE HEX ESTAO ZERADOS)
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,7 +19,7 @@ int main(int argc, char** argv)
 {
 	FILE *entrada = fopen(argv[1], "r+");
 	FILE *objeto = fopen(argv[2], "w+");
-	FILE *memoria_de_instrucao = tmpfile();
+	FILE *memoria_principal = tmpfile();
 	FILE *memoria_de_dados = tmpfile();
 	FILE *tabela_de_simbolos = tmpfile();
 	char aux[300];
@@ -40,6 +36,11 @@ int main(int argc, char** argv)
 	long long int temp =0;
 	short int hexlinha =0;
 	int dot_externs = 0;
+
+	//contadores para o numero de linhas que o arquivo terá.
+	int contador_de_labels = 0;
+	int contador_de_instrucoes = 0;
+	int contador_de_dados = 0;
 
 	char label[100];
 	//PASSAGEM ZERO
@@ -66,9 +67,10 @@ int main(int argc, char** argv)
 		label[contador] = 0;
 
 		fprintf(tabela_de_simbolos, "%s 0\n", label); 
-		fprintf(memoria_de_instrucao, "%s e\n", label); 
+		fprintf(memoria_principal, "%s e\n", label); 
 		fseek(entrada, 1, SEEK_CUR);
 		fscanf(entrada, "%[^\n]s", aux);
+		contador_de_labels++;
 	}
 
 	//PASSAGEM 1
@@ -108,7 +110,8 @@ int main(int argc, char** argv)
 				pnt++;
 
 				fprintf(tabela_de_simbolos, "%s %d\n", label, numlinha); 
-				fprintf(memoria_de_instrucao, "%s %d\n", label, numlinha); 
+				fprintf(memoria_principal, "%s %d\n", label, numlinha); 
+				contador_de_labels++;
 
 				//procura a proxima letra ou ponto (.data)
 				while(!isalpha(*pnt) && (*pnt) != '.')
@@ -207,42 +210,42 @@ int main(int argc, char** argv)
 		if(instrucao != -1)
 		{
 			//start code, tamanho dos dados em hex, offset do endereco e tipo do dado
-			fprintf(memoria_de_instrucao, ":01");
+			fprintf(memoria_principal, ":01");
 
 			//offset do endereco
-			fprintf(memoria_de_instrucao, "%04x", endereco++);
+			fprintf(memoria_principal, "%04x", endereco++);
 
 			//tipo do dado
-			fprintf(memoria_de_instrucao, "00");
+			fprintf(memoria_principal, "00");
 
 			//dado da instrucao - primeira parte
-			fprintf(memoria_de_instrucao, "%02x", (instrucao >> 8) & (255));
+			fprintf(memoria_principal, "%02x", (instrucao >> 8) & (255));
 
 			//complemento de dois da soma dos hexes
 			complemento = (instrucao >> 8);
 			complemento += endereco;
 			complemento--;
 			complemento = (~complemento);
-			fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
+			fprintf(memoria_principal, "%02x\n", complemento & (255));
 
 			//segunda linha: mesmo inicio
-			fprintf(memoria_de_instrucao, ":01");
+			fprintf(memoria_principal, ":01");
 
 			//offset do endereco
-			fprintf(memoria_de_instrucao, "%04x", endereco++);
+			fprintf(memoria_principal, "%04x", endereco++);
 
 			//tipo do dado
-			fprintf(memoria_de_instrucao, "00");
+			fprintf(memoria_principal, "00");
 
 			//dado da instrucao - segunda parte
-			fprintf(memoria_de_instrucao, "%02x", instrucao & (255));
+			fprintf(memoria_principal, "%02x", instrucao & (255));
 
 			//complemento de dois da soma dos hexes
 			complemento = (instrucao & (255));
 			complemento += endereco;
 			complemento--;
 			complemento = (~complemento);
-			fprintf(memoria_de_instrucao, "%02x", complemento & (255));
+			fprintf(memoria_principal, "%02x", complemento & (255));
 
 			//ve se tem label e bota na frente
 			int current_opcode = instrucao >> 11;
@@ -256,12 +259,13 @@ int main(int argc, char** argv)
 				char *extra_label = TemLabel(aux);
 				if(extra_label)
 				{
-					fprintf(memoria_de_instrucao, " %s", extra_label);
+					fprintf(memoria_principal, " %s", extra_label);
 					free(extra_label);
 				}
 			}
 
-			fprintf(memoria_de_instrucao, "\n");
+			fprintf(memoria_principal, "\n");
+			contador_de_instrucoes += 2;
 		}
 
 		fseek(entrada, 1, SEEK_CUR);
@@ -271,24 +275,44 @@ int main(int argc, char** argv)
 	fseek(memoria_de_dados, 0, SEEK_SET);
 	while(fscanf(memoria_de_dados, "%[^\n]s", aux) != EOF)
 	{
-		fprintf(memoria_de_instrucao, "%s\n", aux);
+		fprintf(memoria_principal, "%s\n", aux);
 		endereco++;
 		fseek(memoria_de_dados, 1, SEEK_CUR);
+		contador_de_dados ++;
 	}	 
-/*
+/* (isso é inútil aqui, mas deixei de referência para o ligador) - Guilherme
+ * o objetivo desse código é escrever endereços hex zerados até o fim do arquivo e depois botar o EOF.
 	for(; endereco < 256; endereco++)
 	{
-		fprintf(memoria_de_instrucao, ":01%04x0000", endereco);
+		fprintf(memoria_principal, ":01%04x0000", endereco);
 		complemento = endereco;
 		complemento = (~complemento);
-		fprintf(memoria_de_instrucao, "%02x\n", complemento & (255));
+		fprintf(memoria_principal, "%02x\n", complemento & (255));
 	}
 
 	//end of file
-	fprintf(memoria_de_instrucao, ":00000001ff");
+	fprintf(memoria_principal, ":00000001ff");
 */
+
+	//escreve no arquivo objeto todos os dados necessários
+	//rebobina os arquivos
+	fseek(memoria_principal, 0, SEEK_SET);
+	fseek(tabela_de_simbolos, 0, SEEK_SET);
+
+	//imprime os valores das linhas
+	fprintf(objeto, "%d\n", contador_de_labels);
+	fprintf(objeto, "%d\n", contador_de_instrucoes);
+	fprintf(objeto, "%d\n", contador_de_dados);
+
+	// escreve os dados da memoria principal e da tabela
+	while(fscanf(memoria_principal, "%[^\n]s", aux) != EOF)
+	{
+		fprintf(objeto, "%s\n", aux);
+		fseek(memoria_principal, 1, SEEK_CUR);
+	}
+
 	fclose(entrada);
-	fclose(memoria_de_instrucao);
+	fclose(memoria_principal);
 	fclose(memoria_de_dados);
 	fclose(tabela_de_simbolos);
 	fclose(objeto);

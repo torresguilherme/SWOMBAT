@@ -23,3 +23,4 @@ _TrechoA: storei A1 IO            ;deve mostrar 1 na tela
           jump _ERRO               ;se chegar ate aqui esta errado
 _TrechoC: storei A3 IO  ;deve mostrar 3 na tela
           exit
+	jump _externteste1

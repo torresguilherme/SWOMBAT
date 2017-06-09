@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g3 -Wall
-SOURCE = mont.c func.c
+SOURCE = main.c func.c
 EX = mont
 
 all: FORCE
