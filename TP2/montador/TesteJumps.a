@@ -1,5 +1,5 @@
-.extern _meupau
-.extern _suamae1
+.extern _externteste1
+.extern _externteste1
           loadc A0 0              ; Este programa deve mostrar na tela os numeros 1 2 3 nesta ordem
           loadc A1     1          ;muito espaco entre operandos nao deve ser problema
           loadc A2 2
