@@ -1,6 +1,0 @@
-_externteste1: 0
-_externteste1: 0
-_TrechoB: 14
-_ERRO: 24
-_TrechoA: 32
-_TrechoC: 42
