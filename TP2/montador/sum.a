@@ -1,0 +1,4 @@
+_sum add R7 R0
+     add R7 R1
+     add R7 R2
+     return
