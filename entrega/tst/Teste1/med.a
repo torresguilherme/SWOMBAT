@@ -1,0 +1,4 @@
+_med call _sum
+     loadc R6 3
+     divide R7 R6
+     return
