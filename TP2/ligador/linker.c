@@ -6,6 +6,7 @@
 //lembrete: Nos quatro últimos caracteres da segunda linha, os dois primeiros indicam os labels
 
 int main(int argc, char** argv){
+    printf("Oi\n");
     FILE **arq = (FILE **) malloc (1*sizeof(FILE *));
     char aux[300];
 
@@ -14,6 +15,7 @@ int main(int argc, char** argv){
     //buscar nomes dos arquivos
     while (argv[argv_position] != '\0'){
         arq[argv_position-1] = fopen(argv[argv_position], "r+");
+        printf("%s\n", argv[argv_position]);
         arq = (FILE **) realloc (arq, (argv_position+1)*sizeof(FILE *));
         argv_position++;
     }
@@ -25,67 +27,72 @@ int main(int argc, char** argv){
 
     //contagem arquivo
     int t_tab[argv_position-1], t_ins[argv_position-1], t_dat[argv_position-1];
+    int tab_acum = 0, ins_acum = 0, dat_acum = 0;
     int x, y;
+    char c;
 
-    for (x=argv_position; x>0; x--){
-        fscanf(arq[x-1], "%d", t_tab[x-1]);
-        fscanf(arq[x-1], "%d", t_ins[x-1]);
-        fscanf(arq[x-1], "%d", t_dat[x-1]);
+    printf("Oi\n");
+    for (x=1; x<argv_position; x++){
+        fscanf(arq[x-1], "%d", &t_tab[x-1]);
+        fscanf(arq[x-1], "%d", &t_ins[x-1]);
+        fscanf(arq[x-1], "%d", &t_dat[x-1]);
+        
+        printf("%d %d %d\n", t_tab[x-1], t_ins[x-1], t_dat[x-1]);
 
-        for (y=0; y<t_tab[x-1]; y++){
-            fscanf(arq[x-1], "%[^\n]s", aux);
-            fprintf(tabela_de_simbolos, "%s\n", aux);
+        for (y=0; y<t_tab[x-1]+1; y++){
+            fscanf(arq[x-1], "%c", &c);
+            while (c != '\n'){
+                fprintf(tabela_de_simbolos, "%c", c);
+                printf("%c", c);
+                fscanf(arq[x-1], "%c", &c);
+            }
+            printf("\n");
         }
         fprintf(tabela_de_simbolos, "\n");
 
         for (y=0; y<t_ins[x-1]; y++){
-            fscanf(arq[x-1], "%[^\n]s", aux);
-            fprintf(memoria_de_instrucao, "%s\n", aux);
+            int cont=0, pass=0;
+            fscanf(arq[x-1], "%c", &c);
+            while (c != '\n'){
+                if ((cont<3)||(cont>7)){
+                    fprintf(memoria_de_instrucao, "%c", c);
+                    printf("%c", c);
+                }else{
+                    if (pass==0){
+                        fprintf(memoria_de_instrucao, "%04x", ins_acum);
+                        printf("%04x", ins_acum++);
+                        pass=1;
+                    }
+                }
+                cont++;
+                fscanf(arq[x-1], "%c", &c);
+            }
+            fprintf(memoria_de_instrucao, "\n");
+            printf("\n");
         }
+        printf("\n");
 
         for (y=0; y<t_dat[x-1]; y++){
-            fscanf(arq[x-1], "%[^\n]s", aux);
-            fprintf(memoria_de_dados, "%s\n", aux);
+            int cont=0, pass=0;
+            fscanf(arq[x-1], "%c", &c);
+            while (c != '\n'){
+                if ((cont<3)||(cont>7)){
+                    fprintf(memoria_de_dados, "%c", c);
+                    printf("%c", c);
+                }else{
+                    if (pass==0){
+                        fprintf(memoria_de_dados, "%04x", ins_acum);
+                        printf("%04x", ins_acum++);
+                        pass=1;
+                    }
+                }
+                cont++;
+                fscanf(arq[x-1], "%c", &c);
+            }
+            fprintf(memoria_de_dados, "\n");
+            printf("\n");
         }
     }
 
-    
-
 return 0;
-}
-
-short int SearchForLabel(char *label,FILE *tabela_de_simbolos)
-{
-  //busca linearmente por uma label na matriz de símbolos comecando do inicio
-  //gera o endereco na memoria de instruçoes e guarda na chamada da operação
-  
-  fseek(tabela_de_simbolos, 0, SEEK_SET);
-  
-  char current[100]; //primeira palavra na linha
-  char trash[300]; //guarda o resto da linha
-  int labeladdr = 0; //endereço da label
-  int found = 0; //sinaliza se a label for encontrada ou nao
-  short int lines = 0; //o numero da linha no codigo onde a label for encontrada
-  
-  while(!found)
-  {
-    fscanf(tabela_de_simbolos, "%s", current);
-    if(!strcmp(label, current)) //compara com a label que se quer encontrar
-    {
-      found = 1;
-      fscanf(tabela_de_simbolos, "%d", &labeladdr);
-      
-    }
-    
-    else //nesse caso, ainda nao encontrou
-    {
-      fscanf(tabela_de_simbolos, "%[^\n]s", trash);
-      if(isalpha(current[0]) || current[0] == '_')
-      {
-        lines++;
-      }
-    }
-  }
-  
-  return labeladdr;
 }
