@@ -3,6 +3,8 @@
 #include <string.h>
 #include <ctype.h>
 
+//lembrete: Nos quatro últimos caracteres da segunda linha, os dois primeiros indicam os labels
+
 int main(int argc, char** argv){
     FILE **arq = (FILE **) malloc (1*sizeof(FILE *));
     char aux[300];
@@ -52,3 +54,38 @@ int main(int argc, char** argv){
 return 0;
 }
 
+short int SearchForLabel(char *label,FILE *tabela_de_simbolos)
+{
+  //busca linearmente por uma label na matriz de símbolos comecando do inicio
+  //gera o endereco na memoria de instruçoes e guarda na chamada da operação
+  
+  fseek(tabela_de_simbolos, 0, SEEK_SET);
+  
+  char current[100]; //primeira palavra na linha
+  char trash[300]; //guarda o resto da linha
+  int labeladdr = 0; //endereço da label
+  int found = 0; //sinaliza se a label for encontrada ou nao
+  short int lines = 0; //o numero da linha no codigo onde a label for encontrada
+  
+  while(!found)
+  {
+    fscanf(tabela_de_simbolos, "%s", current);
+    if(!strcmp(label, current)) //compara com a label que se quer encontrar
+    {
+      found = 1;
+      fscanf(tabela_de_simbolos, "%d", &labeladdr);
+      
+    }
+    
+    else //nesse caso, ainda nao encontrou
+    {
+      fscanf(tabela_de_simbolos, "%[^\n]s", trash);
+      if(isalpha(current[0]) || current[0] == '_')
+      {
+        lines++;
+      }
+    }
+  }
+  
+  return labeladdr;
+}
