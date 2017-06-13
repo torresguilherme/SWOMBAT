@@ -1,5 +1,0 @@
-_prod loadc R7 1
-      multiply R7 A0
-      multiply R7 A1
-      multiply R7 A2
-      return
