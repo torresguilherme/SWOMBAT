@@ -1,0 +1,49 @@
+.extern _max
+.extern _min
+.extern _sum
+.extern _prod
+.extern _med
+         clear A0         ; inicializacao dos registradores com zero
+         clear A1
+         clear A2  
+         clear A3  
+         clear A4 
+         clear A5 
+         clear A6 
+_inicio  clear A7         ; inicio do programa
+         loadi A3 IO      ; le OP
+         loadi A0 IO      ; le A
+         loadi A1 IO      ; le B
+         loadi A2 IO      ; le C
+         move A4 A3
+         addi A4 -1
+         jumpz _maxint
+         move A4 A3
+         addi A4 -2
+         jumpz _minint
+         move A4 A3
+         addi A4 -3
+         jumpz _sumint
+         move A4 A3
+         addi A4 -4
+         jumpz _prodint
+         move A4 A3
+         addi A4 -5
+         jumpz _medint
+         move A4 A3
+         addi A4 -100     ; se digitar OP=100, encerra o programa
+         jumpz _fim
+_mostra  storei A7 IO     ; qualquer outro OP, mostra zero e retorna ao inicio
+         jump _inicio     ; volta o loop
+_fim     return           ; encerra o programa   
+_maxint  call _max
+         jump _mostra
+_minint  call _min
+         jump _mostra
+_sumint  call _sum
+         jump _mostra
+_prodint call _prod
+         jump _mostra
+_medint  call _med
+         jump _mostra
+
