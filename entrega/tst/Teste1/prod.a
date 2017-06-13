@@ -1,0 +1,5 @@
+_prod loadc A7 1
+      multiply A7 A0
+      multiply A7 A1
+      multiply A7 A2
+      return

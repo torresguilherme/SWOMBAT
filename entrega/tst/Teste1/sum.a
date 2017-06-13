@@ -1,0 +1,4 @@
+_sum add A7 A0
+     add A7 A1
+     add A7 A2
+     return
