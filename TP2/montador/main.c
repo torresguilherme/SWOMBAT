@@ -248,7 +248,7 @@ int main(int argc, char** argv)
 			fprintf(memoria_principal, "%02x", complemento & (255));
 
 			//ve se tem label e bota na frente
-			int current_opcode = instrucao >> 11;
+			int current_opcode = (instrucao >> 11) & 31; // 00011111
 			if(current_opcode == 1 //loadi
 			|| current_opcode == 2 //storei
 			|| current_opcode == 7 //jump

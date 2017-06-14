@@ -404,6 +404,12 @@ char *TemLabel(char *inst)
 	int counter = 0;
 	char *ret = malloc(sizeof(char) * 100);
 	char *p = &inst[0];
+
+	while(!isalpha(*p))
+	{
+		p++;
+	}
+
 	while(*p != '_')
 	{
 		if((*p) == 0)
