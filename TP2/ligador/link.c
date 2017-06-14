@@ -15,14 +15,16 @@ int main(int argc, char** argv){
     int offsetDADO = 0;
     FILE *fp;
     FILE *saida = fopen("saida.hex", "w+");
-    FILE *memoria_de_instrucao = fopen("memI.txt", "w+");//tmpfile();
-    FILE *memoria_de_dados = fopen("memD.txt", "w+");//tmpfile();
-    FILE *tabela_de_simbolos = fopen("tabS.txt", "w+");//tmpfile();
+    FILE *memoria_de_instrucao = tmpfile();
+    FILE *memoria_de_dados = tmpfile();
+    FILE *tabela_de_simbolos = tmpfile();
+    FILE *tabela = tmpfile();
     char aux[300];
     char *pnt;
     short int valor=0;
     char label[30];
-    char escre[14];
+    int endereco = 0;
+    int complemento = 0;
 
 //Primeira etapa: Le cada modulo.o e organiza as partes(tabela, dado e instrucao)
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,7 +80,7 @@ int main(int argc, char** argv){
 
     //tudo da tabela que for dado, adiciona offsetINST
     fseek(tabela_de_simbolos, 0, SEEK_SET); //rebobina tabela_de_simbolos
-    arrumaLabelDados(offsetINST,tabela_de_simbolos);
+    arrumaLabelDados(offsetINST,tabela_de_simbolos,tabela);
 
 //SEGUNDA ETAPA: junta as memorias e conserta as referencias erradas
 ///////////////////////////////////////////////////////////////////
@@ -92,37 +94,62 @@ int main(int argc, char** argv){
        pnt = &aux[13];
 
            if ((*pnt) == ' ') //verifica se tem que arrumar a label
-               {
+            {
                 pnt++;
                 i=0;
                 while((*pnt) == '_' || isalpha(*pnt) || isdigit(*pnt))
-		    {
-		      label[i] = *pnt;
-		      i++;
-		      pnt++;
-		    }
+	           	    {
+	             	      label[i] = *pnt;
+		                  i++;
+		                 pnt++;
+		              }
 		  
                 label[i] = ':';
                 label[i+1] = 0;
-                valor = SearchForLabel(label, tabela_de_simbolos);
-                printf("Addr certo a ser escrito: %d\n",valor);
+                valor = SearchForLabel(label, tabela);
 
-                //reescreve o valor certo no hex
-	        //fseek(saida, -(strlen(aux)), SEEK_CUR);
-                //fprintf(saida,"%s\n", escre); 
-                }
+                complemento = valor + endereco;
+                complemento = (~complemento);
+                complemento = complemento & (255);
+                sprintf(aux, ":01%04x00%02x%02x", endereco, valor, complemento);
+                fprintf(saida, "%s\n", aux);
+            }
 
-       else fprintf(saida, "%s\n", aux);
+       else
+       {
+              valor = hextoint(aux[9]) * 16 + hextoint(aux[10]);
+              complemento = valor + endereco;
+              complemento = (~complemento);
+              complemento = complemento & (255);
+              sprintf(aux, ":01%04x00%02x%02x", endereco, valor, complemento);
+              fprintf(saida, "%s\n", aux);
+                
+       } 
 
        fseek(memoria_de_instrucao, 1, SEEK_CUR);
-       }
+       endereco++;
+    }
     
     //Printa os dados na saída
     while( fscanf(memoria_de_dados, "%[^\n]s", aux) != EOF) 
      {
-        fprintf(saida, "%s\n", aux);
+                      valor = hextoint(aux[9]) * 16 + hextoint(aux[10]);
+              complemento = valor + endereco;
+              complemento = (~complemento);
+              complemento = complemento & (255);
+              sprintf(aux, ":01%04x00%02x%02x", endereco, valor, complemento);
+              fprintf(saida, "%s\n", aux);
         fseek(memoria_de_dados, 1, SEEK_CUR);
+        endereco++;
      }
+
+    for(; endereco < 256; endereco++)
+    {
+        fprintf(saida, ":01%04x0000", endereco);
+       complemento = endereco;
+       complemento = (~complemento);
+        fprintf(saida, "%02x\n", complemento & (255));
+    }
     //end of file
     fprintf(saida, ":00000001ff");
 

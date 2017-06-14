@@ -1,0 +1,7 @@
+_sum: loadi A6 _Valorsum
+     storei A6 IO      ; deve mostrar o valorsum
+     add A7 A0
+     add A7 A1
+     add A7 A2
+     return
+_Valorsum: .data 2 33       

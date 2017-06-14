@@ -1,0 +1,25 @@
+_max:    storei A6 IO      ; deve mostrar o valormax
+         move A5 A0            ;A
+         move A6 A1            ;B
+         multiply A5 A0        ;faz o quadrado para garantir o valor absoluto
+         multiply A6 A1 
+         subtract A5 A6        ;A<-(A-B)
+         jmpn A5 _testaBC     ;Se A<0, B>A e tem que testar B e C
+         move A5 A0            ;Se A>=0, tem que testar A e C
+         move A6 A2
+         multiply A5 A0
+         multiply A6 A2
+         subtract A5 A6        ;A<-(A-C)  
+         jmpn A5 _maxC        ;Se A<0, C>A e mostra C
+         jump _maxA            ;Se A>=0, mostraA
+_testaBC: move A5 A2          
+         multiply A5 A2
+         subtract A5 A6        ;C<-(B-C)  
+         jmpn A5 _maxC        ;Se C<0, C>B e mostra C
+         jump _maxB            ;Se C>=0, mostraB
+_maxA:    move A7 A0
+         return
+_maxB:    move A7 A1
+         return
+_maxC:    move A7 A2
+         return

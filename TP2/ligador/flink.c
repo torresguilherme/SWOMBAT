@@ -27,6 +27,7 @@ char *resolveLabels(char *aux1, int tamINST1, int offsetINST1, int offsetDADO1)
 		}
   
         label[counter] = ':';
+        label[counter+1] = 0;
 
         //pega labeladdr
         while(!isdigit(*p))
@@ -60,11 +61,10 @@ char *resolveLabels(char *aux1, int tamINST1, int offsetINST1, int offsetDADO1)
                      sprintf(ret,"%s d%d", label, labeladdr);
              }
 
-
 	return ret;
 }
 
-int arrumaLabelDados(int offsetINST2,FILE *tabela_de_simbolos1)
+int arrumaLabelDados(int offsetINST2,FILE *tabela_de_simbolos1, FILE *tabela1)
 {
        int counter = 0;
        char auxx[300];
@@ -92,7 +92,10 @@ int arrumaLabelDados(int offsetINST2,FILE *tabela_de_simbolos1)
 		}
   
            label[counter] = ':';
+           label[counter+1] = 0;
 
+           printf("%s\n",label);
+           printf("%d\n",offsetINST2);
            pnt++;
            pnt++;
 
@@ -102,28 +105,28 @@ int arrumaLabelDados(int offsetINST2,FILE *tabela_de_simbolos1)
 
                 //pega labeladdr
                 while(!isdigit(*pnt))
-		{
-			pnt++;
-		}
+				{
+					pnt++;
+				}
 
                 counter =0;
 
                 while(isdigit(*pnt))
-		{
-			addr[counter] = *pnt;
-			counter++;
-			pnt++;
-		}
+				{
+					addr[counter] = *pnt;
+					counter++;
+					pnt++;
+				}
                 labeladdr = atoi(addr);
 
                 //acrescenta o offset
                 labeladdr =labeladdr + offsetINST2;
                 
                 //printa no arquivo
-		fseek(tabela_de_simbolos1, -(strlen(auxx)), SEEK_CUR);
-		fprintf(tabela_de_simbolos1,"%s %d\n", label, labeladdr); 
+				fprintf(tabela1,"%s %d\n", label, labeladdr); 
               }
-
+            else fprintf(tabela1,"%s\n", auxx); 
+          
           fseek(tabela_de_simbolos1, 1, SEEK_CUR);
        }
       return 0;
@@ -163,4 +166,19 @@ short int SearchForLabel(char *label,FILE *tabela_de_simbolos)
 	}
 
 	return labeladdr;
+}
+
+int hextoint(char hex)
+{
+	if(isdigit(hex))
+	{
+		return hex-48;
+	}
+
+	else if(isalpha(hex))
+	{
+		return hex-87;
+	}
+
+	return 0;
 }

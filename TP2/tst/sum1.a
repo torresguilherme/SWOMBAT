@@ -1,0 +1,5 @@
+_sum: storei A6 IO      ; deve mostrar o valorsum
+     add A7 A0
+     add A7 A1
+     add A7 A2
+     return   

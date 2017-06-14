@@ -1,0 +1,8 @@
+.extern _sum
+_med: loadi A6 _Valormed
+     storei A6 IO      ; deve mostrar o valormed
+     call _sum
+     loadc A6 3
+     divide A7 A6
+     return
+_Valormed: .data 2 55   

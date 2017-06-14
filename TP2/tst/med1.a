@@ -1,0 +1,6 @@
+.extern _sum
+_med: storei A6 IO      ; deve mostrar o valormed
+     call _sum
+     loadc A6 3
+     divide A7 A6
+     return
