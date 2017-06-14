@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g3 -Wall
-SOURCE = link.c
+SOURCE = link.c flink.c
 EX = link
 
 all: FORCE
